@@ -1,30 +1,27 @@
-🎶 SongStock
+SongStock
 
 Marketplace de música digital y física (MP3 y Vinilos), desarrollado en Python (Flask) con SQLite como base de datos.
 
-🚀 Características implementadas (Sprint 1)
+Características implementadas (Sprint 1)
 
-✅ Registro de usuarios (rol comprador/vendedor en la misma cuenta).
+- Registro de usuarios (rol comprador/vendedor en la misma cuenta).
 
-✅ Inicio de sesión y cierre de sesión.
+- Inicio de sesión y cierre de sesión.
 
-✅ Recuperación básica de contraseña.
+- Recuperación básica de contraseña.
 
-✅ Catálogo de productos con 20 items.
+- Catálogo de productos con 20 items.
 
-✅ Detalle de producto con precio, artista y descripción.
+- Detalle de producto con precio, artista y descripción.
 
-✅ Búsqueda básica de productos por nombre o artista.
+- Búsqueda básica de productos por nombre o artista.
 
-✅ Filtro de productos por formato (MP3 o Vinilo).
+- Filtro de productos por formato (MP3 o Vinilo).
 
-✅ Interfaz visual con Bootstrap + CSS personalizado.
+- Interfaz visual con Bootstrap + CSS personalizado.
 
-🖥️ Capturas (ejemplo)
+Instalación y ejecución
 
-(aquí puedes añadir imágenes con ![Texto](ruta) más adelante si deseas mostrar pantallas de login, catálogo, etc.)
-
-⚙️ Instalación y ejecución
 1. Clonar el repositorio
 git clone https://github.com/Beltro0/SongStock.git
 cd SongStock
@@ -44,7 +41,7 @@ python app.py
 
 
 La aplicación estará disponible en:
-👉 http://127.0.0.1:5000
+- http://127.0.0.1:5000
 
 🛠️ Tecnologías usadas
 
@@ -58,7 +55,7 @@ Bootstrap 5
 
 CSS personalizado
 
-📌 Próximos pasos (Sprint 2)
+Próximos pasos (Sprint 2)
 
 Mejorar sistema de recuperación de contraseña (token + email).
 
