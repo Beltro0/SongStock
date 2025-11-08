@@ -1,2 +1,3 @@
-# ruta del archivo sqlite (archivo portable)
-DB_PATH = "songstock.db"
+# config.py
+DATABASE = "songstock.db"
+SECRET_KEY = "clave_secreta_universitaria"

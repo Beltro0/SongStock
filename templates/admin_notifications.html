@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-3">📧 Notificaciones de Compra</h2>
+
+  {% if notifications and notifications|length > 0 %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Orden</th>
+            <th>Proveedor</th>
+            <th>Mensaje</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for n in notifications %}
+          <tr>
+            <td>{{ n.id }}</td>
+            <td>#{{ n.order_id }}</td>
+            <td>{{ n.provider_email or '—' }}</td>
+            <td>{{ n.message }}</td>
+            <td>{{ n.created_at }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info">No hay notificaciones almacenadas aún.</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,17 +1,79 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="d-flex justify-content-center">
-  <div class="card shadow-lg border-0" style="max-width: 600px;">
-    <img src="{{ url_for('static', filename=producto['imagen']) }}" class="card-img-top" alt="{{ producto['nombre'] }}">
+
+<div class="product-detail-page d-flex justify-content-center">
+  <div class="card shadow-lg border-0" style="max-width: 640px; width: 100%;">
+    <img
+      src="{{ url_for('static', filename=producto['imagen']) }}"
+      class="card-img-top"
+      alt="{{ producto['nombre'] }}"
+      style="object-fit: cover; max-height: 360px;"
+    >
+
     <div class="card-body">
-      <h3 class="card-title">{{ producto['nombre'] }}</h3>
-      <p class="text-muted">👤 {{ producto['artista'] }}</p>
-      <p><span class="badge bg-secondary">{{ producto['tipo'] }}</span></p>
-      <h4 class="text-success fw-bold mb-3">${{ '%.2f'|format(producto['precio']) }}</h4>
-      <p><strong>Stock:</strong> {{ producto['stock'] }}</p>
-      <p>{{ producto['descripcion'] }}</p>
-      <a href="{{ url_for('catalog') }}" class="btn btn-dark">⬅ Volver al catálogo</a>
+      <!-- Título / artista -->
+      <h3 class="card-title mb-1">{{ producto['nombre'] }}</h3>
+      <p class="text-muted mb-3">👤 {{ producto['artista'] }}</p>
+
+      <!-- Tipo y precio -->
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <span class="badge bg-secondary text-uppercase">{{ producto['tipo'] }}</span>
+        <h4 class="text-success fw-bold mb-0">${{ '%.2f'|format(producto['precio']) }}</h4>
+      </div>
+
+      <!-- Mensaje de disponibilidad según tipo -->
+      {% if (producto['tipo'] or '')|lower == 'vinilo' %}
+        <p class="mb-2">
+          <strong>Stock:</strong>
+          {% if (producto['stock'] or 0) > 0 %}
+            <span class="text-success">{{ producto['stock'] }}</span>
+          {% else %}
+            <span class="text-danger">Sin stock</span>
+          {% endif %}
+        </p>
+      {% else %}
+        <p class="mb-2"><strong>Disponibilidad:</strong> Descarga digital inmediata</p>
+      {% endif %}
+
+      <!-- Descripción -->
+      {% if producto['descripcion'] %}
+        <p class="mb-4">{{ producto['descripcion'] }}</p>
+      {% endif %}
+
+      <!-- Acciones -->
+      <div class="d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('catalog') }}" class="btn btn-dark">⬅ Volver</a>
+
+        {% if session.get('usuario') %}
+          {% set es_vinilo = (producto['tipo'] or '')|lower == 'vinilo' %}
+          {% set sin_stock = es_vinilo and ((producto['stock'] or 0) <= 0) %}
+
+          {% if sin_stock %}
+            <button class="btn btn-secondary" type="button" disabled title="No hay unidades disponibles">
+              🚫 Sin stock
+            </button>
+          {% else %}
+            <a href="{{ url_for('add_to_cart', product_id=producto['id']) }}"
+               class="btn btn-success">
+              ➕ Añadir al carrito
+            </a>
+          {% endif %}
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-outline-primary">
+            Inicia sesión para comprar
+          </a>
+        {% endif %}
+      </div>
+
+      <!-- Información del proveedor (opcional, si existe) -->
+      {% if producto['proveedor_email'] and (producto['tipo'] or '')|lower == 'vinilo' %}
+        <hr class="my-4">
+        <div class="small text-muted">
+          <strong>Proveedor:</strong> {{ producto['proveedor_email'] }}
+        </div>
+      {% endif %}
     </div>
   </div>
 </div>
+
 {% endblock %}

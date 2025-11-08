@@ -1,38 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
-  <div class="card shadow" style="width: 420px;">
-    <div class="card-body p-4">
-      <h4 class="card-title text-center mb-3">Iniciar Sesión</h4>
+<div class="login-page d-flex justify-content-center align-items-center">
+  <div class="auth-card shadow-lg">
+    <h4 class="auth-title">Iniciar Sesión</h4>
 
-      {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-      {% endif %}
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
 
-      <form method="POST">
-        <div class="mb-3">
-          <label class="form-label">Correo</label>
-          <input type="email" class="form-control" name="correo" placeholder="tu@correo.com" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Contraseña</label>
-          <input type="password" class="form-control" name="contraseña" placeholder="********" required>
-        </div>
-        <button class="btn btn-success w-100" type="submit">Ingresar</button>
-      </form>
-
-      <!-- 👇 Aquí añadimos el link de recuperar contraseña -->
-      <div class="text-center mt-2">
-        <small>
-          <a href="{{ url_for('reset_password') }}" class="text-decoration-none text-primary">
-            ¿Olvidaste tu contraseña?
-          </a>
-        </small>
+    <form method="POST" class="auth-form">
+      <div class="mb-3">
+        <label class="form-label">Correo</label>
+        <input type="email" class="form-control" name="correo" placeholder="tu@correo.com" required>
       </div>
-
-      <div class="text-center mt-3">
-        <small>¿No tienes cuenta? <a href="{{ url_for('register') }}">Regístrate</a></small>
+      <div class="mb-3">
+        <label class="form-label">Contraseña</label>
+        <input type="password" class="form-control" name="contraseña" placeholder="********" required>
       </div>
+      <button class="btn btn-primary w-100 auth-btn" type="submit">Ingresar</button>
+    </form>
+
+    <div class="auth-links">
+      <small><a href="{{ url_for('reset_password') }}">¿Olvidaste tu contraseña?</a></small><br>
+      <small>¿No tienes cuenta? <a href="{{ url_for('register') }}">Regístrate</a></small>
     </div>
   </div>
 </div>
