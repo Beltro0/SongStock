@@ -1,94 +1,251 @@
-import sqlite3
-from config import DATABASE
+import sqlite3, os
+from datetime import datetime
 
-# Conexión
-conn = sqlite3.connect(DATABASE)
-cursor = conn.cursor()
+DB_NAME = "songstock.db"
 
-# ---------------- TABLAS ----------------
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS usuarios (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
-    correo TEXT UNIQUE NOT NULL,
-    contraseña TEXT NOT NULL,
-    es_comprador INTEGER DEFAULT 1,
-    es_vendedor INTEGER DEFAULT 1
-)
-''')
+# ---------- CONEXIÓN ----------
+def get_connection():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS productos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
-    artista TEXT NOT NULL,
-    tipo TEXT NOT NULL, -- MP3 o Vinilo
-    precio REAL NOT NULL,
-    stock INTEGER DEFAULT 10,
-    descripcion TEXT,
-    imagen TEXT
-)
-''')
 
-# ---------------- PRODUCTOS ----------------
-cursor.execute("SELECT COUNT(*) FROM productos")
-if cursor.fetchone()[0] == 0:
-    productos = [
-        ("Thriller", "Michael Jackson", "Vinilo", 59.99, 15, "Álbum icónico con Billie Jean y Beat It.", "img/thriller.jpg"),
-        ("Back in Black", "AC/DC", "Vinilo", 49.99, 10, "Clásico del hard rock.", "img/back_in_black.jpg"),
-        ("Abbey Road", "The Beatles", "Vinilo", 69.99, 8, "Legendario álbum de The Beatles.", "img/abbey_road.jpg"),
-        ("The Dark Side of the Moon", "Pink Floyd", "Vinilo", 64.99, 12, "Uno de los discos más influyentes de la historia.", "img/dark_side.jpg"),
-        ("Rumours", "Fleetwood Mac", "Vinilo", 54.99, 10, "Con Go Your Own Way y Dreams.", "img/rumours.jpg"),
-        ("Nevermind", "Nirvana", "Vinilo", 59.99, 14, "Contiene Smells Like Teen Spirit.", "img/nevermind.jpg"),
-        ("Random Access Memories", "Daft Punk", "MP3", 9.99, 100, "Con Get Lucky.", "img/ram.jpg"),
-        ("Discovery", "Daft Punk", "MP3", 7.99, 120, "Incluye One More Time.", "img/discovery.jpg"),
-        ("Homework", "Daft Punk", "MP3", 6.99, 90, "Primer álbum de Daft Punk.", "img/homework.jpg"),
-        ("Born This Way", "Lady Gaga", "MP3", 8.99, 150, "Incluye Born This Way y Judas.", "img/born_this_way.jpg"),
-        ("Artpop", "Lady Gaga", "MP3", 7.49, 130, "Álbum experimental de Gaga.", "img/artpop.jpg"),
-        ("1989", "Taylor Swift", "Vinilo", 52.99, 20, "Álbum con Shake It Off.", "img/1989.jpg"),
-        ("Red", "Taylor Swift", "Vinilo", 49.99, 18, "Incluye All Too Well.", "img/red.jpg"),
-        ("Folklore", "Taylor Swift", "MP3", 9.99, 200, "Álbum íntimo de Taylor.", "img/folklore.jpg"),
-        ("Evermore", "Taylor Swift", "MP3", 9.99, 200, "Continuación de Folklore.", "img/evermore.jpg"),
-        ("DAMN.", "Kendrick Lamar", "Vinilo", 55.99, 15, "Incluye HUMBLE.", "img/damn.jpg"),
-        ("To Pimp a Butterfly", "Kendrick Lamar", "Vinilo", 59.99, 12, "Obra maestra del rap.", "img/tpab.jpg"),
-        ("good kid, m.A.A.d city", "Kendrick Lamar", "MP3", 8.99, 180, "Álbum debut de Kendrick.", "img/gkmc.jpg"),
-        ("The Eminem Show", "Eminem", "Vinilo", 58.99, 10, "Con Without Me y Cleanin' Out My Closet.", "img/eminem_show.jpg"),
-        ("Revival", "Eminem", "MP3", 7.99, 150, "Álbum de 2017.", "img/revival.jpg"),
-        ("Scorpion", "Drake", "MP3", 8.99, 170, "Incluye God's Plan.", "img/scorpion.jpg"),
-        ("Take Care", "Drake", "Vinilo", 56.99, 14, "Álbum con The Motto.", "img/take_care.jpg"),
-        ("Views", "Drake", "Vinilo", 57.99, 16, "Incluye Hotline Bling.", "img/views.jpg"),
-        ("Astroworld", "Travis Scott", "Vinilo", 54.99, 18, "Con Sicko Mode.", "img/astroworld.jpg"),
-        ("Rodeo", "Travis Scott", "MP3", 7.99, 150, "Álbum debut de Travis.", "img/rodeo.jpg"),
-        ("Graduation", "Kanye West", "Vinilo", 60.99, 12, "Incluye Stronger.", "img/graduation.jpg"),
-        ("Yeezus", "Kanye West", "Vinilo", 61.99, 10, "Álbum experimental.", "img/yeezus.jpg"),
-        ("The Life of Pablo", "Kanye West", "MP3", 8.99, 190, "Álbum con Ultralight Beam.", "img/tlop.jpg"),
-        ("Midnight Marauders", "A Tribe Called Quest", "Vinilo", 52.99, 8, "Clásico del hip hop.", "img/midnight_marauders.jpg"),
-        ("The Low End Theory", "A Tribe Called Quest", "Vinilo", 51.99, 8, "Disco influyente en el jazz rap.", "img/low_end_theory.jpg"),
-        ("OK Computer", "Radiohead", "Vinilo", 63.99, 14, "Incluye Paranoid Android.", "img/ok_computer.jpg"),
-        ("Kid A", "Radiohead", "Vinilo", 64.99, 10, "Álbum experimental.", "img/kid_a.jpg"),
-        ("In Rainbows", "Radiohead", "MP3", 9.49, 160, "Con Nude y Weird Fishes.", "img/in_rainbows.jpg"),
-        ("AM", "Arctic Monkeys", "Vinilo", 53.99, 15, "Con Do I Wanna Know?", "img/am.jpg"),
-        ("Whatever People Say I Am", "Arctic Monkeys", "Vinilo", 52.99, 10, "Álbum debut de Arctic Monkeys.", "img/wpsiatwin.jpg"),
-        ("Tranquility Base Hotel & Casino", "Arctic Monkeys", "MP3", 8.49, 140, "Álbum conceptual.", "img/tbhc.jpg"),
-        ("The Wall", "Pink Floyd", "Vinilo", 66.99, 12, "Incluye Another Brick in the Wall.", "img/the_wall.jpg"),
-        ("Wish You Were Here", "Pink Floyd", "Vinilo", 65.99, 10, "Otro clásico de Pink Floyd.", "img/wywh.jpg"),
-        ("Animals", "Pink Floyd", "MP3", 9.49, 130, "Álbum conceptual.", "img/animals.jpg"),
-        ("Led Zeppelin IV", "Led Zeppelin", "Vinilo", 67.99, 10, "Con Stairway to Heaven.", "img/led_zeppelin_iv.jpg"),
-        ("Physical Graffiti", "Led Zeppelin", "Vinilo", 68.99, 9, "Doble álbum icónico.", "img/physical_graffiti.jpg"),
-        ("Houses of the Holy", "Led Zeppelin", "MP3", 8.99, 140, "Incluye The Ocean.", "img/houses_holy.jpg"),
-        ("Hybrid Theory", "Linkin Park", "Vinilo", 55.99, 15, "Álbum debut con In the End.", "img/hybrid_theory.jpg"),
-        ("Meteora", "Linkin Park", "Vinilo", 56.99, 14, "Incluye Numb y Faint.", "img/meteora.jpg"),
-        ("Minutes to Midnight", "Linkin Park", "MP3", 8.49, 160, "Álbum con What I've Done.", "img/minutes.jpg"),
-        ("A Night at the Opera", "Queen", "Vinilo", 62.99, 10, "Incluye Bohemian Rhapsody.", "img/night_opera.jpg"),
-        ("News of the World", "Queen", "Vinilo", 61.99, 10, "Incluye We Will Rock You.", "img/news_world.jpg"),
-        ("Greatest Hits", "Queen", "MP3", 10.49, 200, "Recopilación de éxitos.", "img/queen_hits.jpg"),
+# ---------- CREACIÓN COMPLETA ----------
+def create_database():
+    if os.path.exists(DB_NAME):
+        os.remove(DB_NAME)
+        print("🗑️  Base de datos anterior eliminada para recrear limpia.")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # ---------- TABLAS PRINCIPALES ----------
+    cursor.execute("""
+    CREATE TABLE usuarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL,
+        correo TEXT UNIQUE NOT NULL,
+        contraseña TEXT NOT NULL,
+        es_comprador INTEGER DEFAULT 1,
+        es_vendedor INTEGER DEFAULT 0
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE productos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL,
+        artista TEXT,
+        tipo TEXT CHECK(tipo IN ('mp3','vinilo')) NOT NULL,
+        precio REAL NOT NULL,
+        stock INTEGER DEFAULT 0,
+        proveedor_email TEXT,
+        descripcion TEXT,
+        imagen TEXT
+    );
+    """)
+
+    # ---------- TABLAS SECUNDARIAS ----------
+    cursor.executescript("""
+    CREATE TABLE carts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE cart_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      cart_id INTEGER NOT NULL,
+      product_id INTEGER NOT NULL,
+      qty INTEGER NOT NULL DEFAULT 1,
+      unit_price REAL NOT NULL
+    );
+
+    CREATE TABLE orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      total REAL NOT NULL DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE order_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_id INTEGER NOT NULL,
+      product_id INTEGER NOT NULL,
+      qty INTEGER NOT NULL,
+      unit_price REAL NOT NULL,
+      subtotal REAL NOT NULL
+    );
+
+    CREATE TABLE downloads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      product_id INTEGER NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      expires_at DATETIME NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_id INTEGER NOT NULL,
+      provider_email TEXT,
+      message TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # ---------- USUARIO DEMO ----------
+    cursor.execute("""
+    INSERT INTO usuarios (nombre, correo, contraseña, es_comprador, es_vendedor)
+    VALUES ('Usuario Demo', 'demo@correo.com', '1234', 1, 1);
+    """)
+
+    # ---------- 50 PRODUCTOS (MP3 + VINILOS) ----------
+    demo_products = [
+
+        # ===== MP3 (25) =====
+        ("Shape of You", "Ed Sheeran", "mp3", 2.99, 0, None, "Éxito mundial de pop moderno.",
+         "https://i.imgur.com/Q2S0M5t.jpg"),
+        ("Blinding Lights", "The Weeknd", "mp3", 2.49, 0, None, "Synthwave contemporáneo con gran energía.",
+         "https://i.imgur.com/wqkRpco.jpg"),
+        ("Levitating", "Dua Lipa", "mp3", 2.29, 0, None, "Pop-disco con estilo retro y ritmo contagioso.",
+         "https://i.imgur.com/Y4cQjzF.jpg"),
+        ("Watermelon Sugar", "Harry Styles", "mp3", 2.19, 0, None, "Pop alegre con influencias vintage.",
+         "https://i.imgur.com/2FxF0fA.jpg"),
+        ("Peaches", "Justin Bieber", "mp3", 2.39, 0, None, "R&B suave con ritmos modernos.",
+         "https://i.imgur.com/4QkSezC.jpg"),
+        ("Save Your Tears", "The Weeknd", "mp3", 2.59, 0, None, "Canción nostálgica de amor y arrepentimiento.",
+         "https://i.imgur.com/0zFkGGB.jpg"),
+        ("Stay", "The Kid LAROI & Justin Bieber", "mp3", 2.49, 0, None, "Colaboración pop intensa y pegajosa.",
+         "https://i.imgur.com/Ec9uBfq.jpg"),
+        ("Bad Guy", "Billie Eilish", "mp3", 2.19, 0, None, "Minimalista, oscura y experimental.",
+         "https://i.imgur.com/jHPOzYk.jpg"),
+        ("As It Was", "Harry Styles", "mp3", 2.39, 0, None, "Reflexiva y melódica con sintetizadores ochenteros.",
+         "https://i.imgur.com/0yiXcmF.jpg"),
+        ("Flowers", "Miley Cyrus", "mp3", 2.29, 0, None, "Canción sobre independencia emocional.",
+         "https://i.imgur.com/THzqpYZ.jpg"),
+        ("Rolling in the Deep", "Adele", "mp3", 2.99, 0, None, "Voz potente con ritmo soul.",
+         "https://i.imgur.com/DxtsYXa.jpg"),
+        ("Uptown Funk", "Mark Ronson ft. Bruno Mars", "mp3", 2.79, 0, None, "Funk moderno irresistible.",
+         "https://i.imgur.com/TS6Cxdy.jpg"),
+        ("Happy", "Pharrell Williams", "mp3", 2.49, 0, None, "Himno alegre del pop contemporáneo.",
+         "https://i.imgur.com/YzvxyOZ.jpg"),
+        ("Counting Stars", "OneRepublic", "mp3", 2.59, 0, None, "Pop-rock con toques de folk.",
+         "https://i.imgur.com/HmBQsh2.jpg"),
+        ("Radioactive", "Imagine Dragons", "mp3", 2.69, 0, None, "Fusión de rock alternativo y electrónica.",
+         "https://i.imgur.com/TTACoXo.jpg"),
+        ("Believer", "Imagine Dragons", "mp3", 2.49, 0, None, "Motivacional y energética.",
+         "https://i.imgur.com/x8FytHb.jpg"),
+        ("Viva La Vida", "Coldplay", "mp3", 2.99, 0, None, "Pop orquestal con tintes épicos.",
+         "https://i.imgur.com/qYk8m6p.jpg"),
+        ("Paradise", "Coldplay", "mp3", 2.79, 0, None, "Tema melancólico con gran producción.",
+         "https://i.imgur.com/05U2N6M.jpg"),
+        ("Demons", "Imagine Dragons", "mp3", 2.39, 0, None, "Balada oscura sobre lucha interna.",
+         "https://i.imgur.com/KW2UkL8.jpg"),
+        ("Someone Like You", "Adele", "mp3", 2.99, 0, None, "Balada emocional con piano.",
+         "https://i.imgur.com/KJzLqyz.jpg"),
+        ("Let Her Go", "Passenger", "mp3", 2.39, 0, None, "Melancólica y acústica.",
+         "https://i.imgur.com/jXSCcJH.jpg"),
+        ("Thinking Out Loud", "Ed Sheeran", "mp3", 2.59, 0, None, "Romántica con toque soul.",
+         "https://i.imgur.com/Mi7YcIu.jpg"),
+        ("Shallow", "Lady Gaga & Bradley Cooper", "mp3", 2.79, 0, None, "Dueto poderoso de la película A Star is Born.",
+         "https://i.imgur.com/E6EJ2W1.jpg"),
+        ("Perfect", "Ed Sheeran", "mp3", 2.69, 0, None, "Romántica y cálida, ideal para bodas.",
+         "https://i.imgur.com/qzKLaUx.jpg"),
+        ("Halo", "Beyoncé", "mp3", 2.89, 0, None, "Balada pop con voces angelicales.",
+         "https://i.imgur.com/1P3Jp9y.jpg"),
+
+        # ===== VINILOS (25) =====
+        ("Abbey Road", "The Beatles", "vinilo", 25.00, 15, "beatles@vinyls.com",
+         "Vinilo icónico con 'Come Together' y 'Here Comes the Sun'.",
+         "https://i.imgur.com/dEdHbGg.jpg"),
+        ("Thriller", "Michael Jackson", "vinilo", 30.00, 10, "mj@vinyls.com",
+         "El disco más vendido de la historia, 1982.",
+         "https://i.imgur.com/6bzAEGg.jpg"),
+        ("Back in Black", "AC/DC", "vinilo", 28.50, 12, "acdc@vinyls.com",
+         "Álbum de hard rock clásico.",
+         "https://i.imgur.com/qDJn9HK.jpg"),
+        ("Rumours", "Fleetwood Mac", "vinilo", 26.00, 8, "mac@vinyls.com",
+         "Uno de los discos más vendidos de todos los tiempos.",
+         "https://i.imgur.com/hUlG7vv.jpg"),
+        ("Dark Side of the Moon", "Pink Floyd", "vinilo", 32.00, 9, "pinkfloyd@vinyls.com",
+         "Obra maestra del rock progresivo.",
+         "https://i.imgur.com/2ugFhbz.jpg"),
+        ("Hotel California", "Eagles", "vinilo", 27.00, 6, "eagles@vinyls.com",
+         "Clásico del rock suave de los 70s.",
+         "https://i.imgur.com/Ln5Vg6y.jpg"),
+        ("21", "Adele", "vinilo", 26.00, 8, "adele@vinyls.com",
+         "Vinilo moderno con gran potencia vocal.",
+         "https://i.imgur.com/xL0H5Eh.jpg"),
+        ("Born to Run", "Bruce Springsteen", "vinilo", 25.50, 10, "springsteen@vinyls.com",
+         "Himno del rock estadounidense.",
+         "https://i.imgur.com/HqDe8Wv.jpg"),
+        ("The Wall", "Pink Floyd", "vinilo", 33.00, 5, "pinkfloyd@vinyls.com",
+         "Conceptual y revolucionario, 1979.",
+         "https://i.imgur.com/CxB3aqW.jpg"),
+        ("Nevermind", "Nirvana", "vinilo", 29.00, 7, "nirvana@vinyls.com",
+         "Grunge que cambió la historia del rock.",
+         "https://i.imgur.com/MnZCvYX.jpg"),
+        ("Appetite for Destruction", "Guns N' Roses", "vinilo", 30.00, 9, "gnr@vinyls.com",
+         "Debut explosivo del hard rock.",
+         "https://i.imgur.com/bGvCv5z.jpg"),
+        ("Led Zeppelin IV", "Led Zeppelin", "vinilo", 31.00, 10, "zeppelin@vinyls.com",
+         "Incluye 'Stairway to Heaven'.",
+         "https://i.imgur.com/z13E7yW.jpg"),
+        ("The Joshua Tree", "U2", "vinilo", 28.00, 8, "u2@vinyls.com",
+         "Rock alternativo y espiritual de los 80s.",
+         "https://i.imgur.com/DZk0bMv.jpg"),
+        ("Random Access Memories", "Daft Punk", "vinilo", 32.00, 5, "daftpunk@vinyls.com",
+         "Electrónica con influencias setenteras.",
+         "https://i.imgur.com/lxRAzB2.jpg"),
+        ("American Idiot", "Green Day", "vinilo", 27.00, 10, "greenday@vinyls.com",
+         "Rock político y energético.",
+         "https://i.imgur.com/6nTwT2y.jpg"),
+        ("1989", "Taylor Swift", "vinilo", 29.00, 12, "taylorswift@vinyls.com",
+         "Pop moderno con estilo ochentero.",
+         "https://i.imgur.com/DpZlSGy.jpg"),
+        ("Hounds of Love", "Kate Bush", "vinilo", 26.00, 9, "katebush@vinyls.com",
+         "Álbum experimental de culto.",
+         "https://i.imgur.com/1xSAgVf.jpg"),
+        ("OK Computer", "Radiohead", "vinilo", 31.00, 7, "radiohead@vinyls.com",
+         "Obra maestra del rock alternativo.",
+         "https://i.imgur.com/RjN9NQe.jpg"),
+        ("The College Dropout", "Kanye West", "vinilo", 28.00, 5, "kanye@vinyls.com",
+         "Hip-hop introspectivo y melódico.",
+         "https://i.imgur.com/LlMJUTb.jpg"),
+        ("To Pimp a Butterfly", "Kendrick Lamar", "vinilo", 33.00, 4, "kendrick@vinyls.com",
+         "Rap innovador con jazz y funk.",
+         "https://i.imgur.com/JMiHxR6.jpg"),
+        ("Back to Black", "Amy Winehouse", "vinilo", 27.00, 8, "amy@vinyls.com",
+         "Soul moderno con estética retro.",
+         "https://i.imgur.com/93Wvx6r.jpg"),
+        ("Rumours (Reissue)", "Fleetwood Mac", "vinilo", 28.00, 6, "mac@vinyls.com",
+         "Versión remasterizada del clásico de 1977.",
+         "https://i.imgur.com/BZDV19Y.jpg"),
+        ("Future Nostalgia", "Dua Lipa", "vinilo", 29.00, 10, "dualipa@vinyls.com",
+         "Vinilo moderno con estética disco.",
+         "https://i.imgur.com/gB5Cy2S.jpg"),
+        ("DAMN.", "Kendrick Lamar", "vinilo", 30.00, 5, "kendrick@vinyls.com",
+         "Rap contemporáneo ganador del Pulitzer.",
+         "https://i.imgur.com/2Oe9OnI.jpg"),
+        ("In Rainbows", "Radiohead", "vinilo", 32.00, 6, "radiohead@vinyls.com",
+         "Rock alternativo con texturas electrónicas.",
+         "https://i.imgur.com/FR6m8Uv.jpg")
     ]
 
-    cursor.executemany(
-        "INSERT INTO productos (nombre, artista, tipo, precio, stock, descripcion, imagen) VALUES (?,?,?,?,?,?,?)",
-        productos
-    )
+    cursor.executemany("""
+        INSERT INTO productos (nombre, artista, tipo, precio, stock, proveedor_email, descripcion, imagen)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, demo_products)
 
-conn.commit()
-conn.close()
-print("✅ Base de datos creada con 50 productos.")
+    conn.commit()
+    conn.close()
+    print("✅ Base de datos creada con 50 productos (25 MP3 + 25 Vinilos).")
+    print("   Usuario demo: demo@correo.com / contraseña: 1234")
+
+
+if __name__ == "__main__":
+    create_database()

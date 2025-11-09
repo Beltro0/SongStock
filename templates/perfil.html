@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="perfil-page container py-5 fade-in">
+  <h2 class="mb-4 text-center fw-bold text-primary">🎧 Panel del Usuario</h2>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }} text-center">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  {% if descargas %}
+    <!-- 📊 Dashboard resumen -->
+    <div class="row g-4 mb-5">
+      <!-- Tarjeta 1 -->
+      <div class="col-md-4">
+        <div class="card text-center shadow-sm border-0 rounded-4">
+          <div class="card-body py-4">
+            <h5 class="text-muted mb-1">Total de descargas</h5>
+            <h2 class="fw-bold text-primary display-6">{{ descargas|length }}</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarjeta 2 -->
+      <div class="col-md-4">
+        <div class="card text-center shadow-sm border-0 rounded-4">
+          <div class="card-body py-4">
+            <h5 class="text-muted mb-1">Última canción descargable</h5>
+            <h6 class="fw-bold text-dark">
+              {{ descargas[0]['nombre'] if descargas else 'Sin descargas' }}
+            </h6>
+            <p class="text-muted small mb-0">
+              {{ descargas[0]['artista'] if descargas else '' }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+    <!-- Tarjeta 3 -->
+<div class="col-md-4">
+  <div class="card text-center shadow-sm border-0 rounded-4">
+    <div class="card-body py-4">
+      <h5 class="text-muted mb-1">Próximo vencimiento</h5>
+
+      {% set expiracion = None %}
+      {% for d in descargas %}
+        {% if not expiracion %}
+          {% set expiracion = d['expires_at'] or d['fecha_expira'] %}
+        {% endif %}
+      {% endfor %}
+
+      {% if expiracion %}
+        <p class="fw-bold text-danger mb-0">{{ expiracion }}</p>
+      {% else %}
+        <p class="text-muted">Sin descargas activas</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+
+    <!-- 🎶 Tabla de descargas -->
+    <h4 class="fw-semibold mb-3">Mis canciones descargables</h4>
+    <div class="table-responsive shadow-sm rounded-4 bg-white p-3 mb-4">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr class="text-center">
+            <th>Imagen</th>
+            <th>Canción</th>
+            <th>Artista</th>
+            <th>Token</th>
+            <th>Expira</th>
+            <th>Descargar</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in descargas %}
+          <tr class="text-center align-middle">
+            <td style="width: 120px;">
+              {% if d['imagen'] %}
+                {% if d['imagen'].startswith('http') %}
+                  <img src="{{ d['imagen'] }}" alt="{{ d['nombre'] }}" class="img-fluid rounded" style="max-height: 80px;">
+                {% else %}
+                  <img src="{{ url_for('static', filename=d['imagen']) }}" alt="{{ d['nombre'] }}" class="img-fluid rounded" style="max-height: 80px;">
+                {% endif %}
+              {% else %}
+                <div class="bg-light rounded p-3 text-muted small">Sin imagen</div>
+              {% endif %}
+            </td>
+            <td class="fw-semibold">{{ d['nombre'] }}</td>
+            <td class="text-muted small">{{ d['artista'] }}</td>
+            <td><code>{{ d['token'][:8] }}...</code></td>
+            <td class="text-secondary small">{{ d['fecha_expira'] or d['expires_at'] }}</td>
+            <td>
+              <a href="{{ url_for('download_file', token=d['token']) }}"
+                 class="btn btn-primary btn-sm rounded-pill shadow-sm fw-semibold">
+                ⬇ Descargar
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="text-center">
+      <a href="{{ url_for('catalog') }}" class="btn btn-outline-dark rounded-pill px-4">
+        🛍 Volver al catálogo
+      </a>
+    </div>
+
+  {% else %}
+    <div class="text-center mt-5">
+      <img src="https://i.imgur.com/sEirZbT.png" alt="Sin descargas" class="mb-3" style="max-width: 220px;">
+      <p class="lead text-muted mb-4">Aún no has descargado ninguna canción 🎵</p>
+      <a href="{{ url_for('catalog') }}" class="btn btn-outline-primary rounded-pill px-4">
+        Explorar catálogo
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+<!-- 🌈 Estilos -->
+<style>
+  .fade-in {
+    animation: fadeIn .8s ease both;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .perfil-page {
+    min-height: 90vh;
+    background: linear-gradient(135deg, #f8fafc, #eef2f7);
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    transition: transform .2s ease;
+  }
+  .table img {
+    transition: transform .2s ease;
+  }
+  .table img:hover {
+    transform: scale(1.05);
+  }
+  code {
+    background: #f3f4f6;
+    border-radius: 4px;
+    padding: 2px 6px;
+  }
+</style>
+
+{% endblock %}

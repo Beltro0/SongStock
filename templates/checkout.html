@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="checkout-page container py-5 fade-in">
+  <h2 class="text-center fw-bold mb-4 text-primary">💳 Pasarela de Pago Simulada</h2>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-body p-4">
+
+          <!-- 🧾 Resumen del pedido -->
+          <h5 class="fw-semibold mb-3 text-secondary">🛍 Resumen de tu compra</h5>
+          <ul class="list-group mb-4">
+            {% for p in productos %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>{{ p['nombre'] }} ({{ p['tipo']|upper }})</span>
+                <span class="fw-bold text-success">${{ '%.2f'|format(p['precio'] * p['cantidad']) }}</span>
+              </li>
+            {% endfor %}
+            <li class="list-group-item d-flex justify-content-between align-items-center bg-light fw-bold">
+              <span>Total</span>
+              <span class="text-success fs-5">${{ '%.2f'|format(total) }}</span>
+            </li>
+          </ul>
+
+          <!-- 💳 Formulario simulado -->
+          <h5 class="fw-semibold mb-3 text-secondary">💰 Método de pago</h5>
+          <form id="paymentForm" method="POST" action="{{ url_for('checkout') }}">
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label">Nombre en la tarjeta</label>
+                <input type="text" class="form-control rounded-pill" placeholder="Juan Pérez" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Número de tarjeta</label>
+                <input type="text" class="form-control rounded-pill" placeholder="**** **** **** 4242" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Expira</label>
+                <input type="text" class="form-control rounded-pill" placeholder="12/28" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">CVV</label>
+                <input type="text" class="form-control rounded-pill" placeholder="123" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Tipo</label>
+                <select class="form-select rounded-pill" required>
+                  <option>Visa</option>
+                  <option>MasterCard</option>
+                  <option>American Express</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 🔘 Botón de pago -->
+            <div class="text-center mt-4">
+              <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold" id="payButton">
+                Pagar ahora 💳
+              </button>
+              <div id="loadingSpinner" class="mt-3 d-none">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Procesando...</span>
+                </div>
+                <p class="mt-2 text-muted small">Procesando pago, por favor espera...</p>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🌈 Estilos y animación -->
+<style>
+  .checkout-page {
+    min-height: 90vh;
+    background: linear-gradient(135deg, #f8fafc, #eef2f7);
+  }
+  .fade-in {
+    animation: fadeIn .8s ease both;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<!-- 🔄 JS de simulación -->
+<script>
+  const payForm = document.getElementById('paymentForm');
+  const spinner = document.getElementById('loadingSpinner');
+  const button = document.getElementById('payButton');
+
+  payForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    button.disabled = true;
+    spinner.classList.remove('d-none');
+
+    // Simular procesamiento
+    setTimeout(() => {
+      payForm.submit(); // Envía al backend /checkout (tu flujo real)
+    }, 3000);
+  });
+</script>
+
+{% endblock %}
